@@ -1,0 +1,178 @@
+<link rel="stylesheet" href="{{ __css__ }}vendor/semantic/semantic.min.css">
+<link rel="stylesheet" href="{{ __css__ }}vendor/fa.min.css">
+<link rel="stylesheet" href="{{ __css__ }}vendor/highlight/monokai-sublime.css">
+<link rel="stylesheet" href="{{ __css__ }}common/monitor.css">
+
+<!-- Main monitor sidebar -->
+<div class="ui left vertical menu sidebar monitor-sidebar scale down">
+    <a href="#" class="item menu-item-liveedit"><div class="item-inner"><i class="fas fa-pencil-alt"></i> LiveEdit</div></a>
+    <a href="#" class="item menu-item-query"><div class="item-inner"><i class="fas fa-database"></i> Queries ({{ db.queryCount }})</div></a>
+    <a href="#" class="item menu-item-runtime"><div class="item-inner"><i class="fas fa-chart-area"></i> Runtime</div></a>
+    <a href="#" class="item menu-item-client"><div class="item-inner"><i class="fas fa-laptop"></i> Client</div></a>
+</div>
+<!-- !Main monitor sidebar -->
+
+<!-- Query sidebar -->
+<nav class="ui right vertical very wide sidebar monitor-sub-sidebar query-sidebar">
+    <h1 class="header"><i class="fas fa-database"></i> Queries</h1>
+
+    <div class="ui checkbox" id="show-translated-queries">
+        <input type="checkbox" checked>
+        <label>Show translated queries</label>
+    </div>
+
+    <table class="ui celled table">
+        <thead>
+        <tr>
+            <th>Status</th>
+            <th>Query</th>
+            <th>Message</th>
+            <th>Code</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for index, query in db.queries %}
+            {% if query.status == "Success" %}
+                {% set trColor = "positive" %}
+                {% set labelColor = "green" %}
+            {% elseif query.status == "Error" %}
+                {% set trColor = "negative" %}
+                {% set labelColor = "red" %}
+            {% endif %}
+
+            <tr class="{{ trColor }}">
+                <td class="center aligned">
+                    <div class="ui horizontal {{ labelColor }} label">{{ query.status }}</div>
+                </td>
+                <td class="query-cell">
+                    <div class="ui styled fluid accordion query-accordion">
+                        {% set headerId = 'monitor-q-header-' ~ index %}
+                        {% set collapseId = 'monitor-q-collapse-' ~ index %}
+
+                        <h4 class="title">
+                            <pre><code class="sql">{{ query.query }}</code></pre>
+                            <pre><code class="sql translated">{{ query.queryTranslated }}</code></pre>
+                        </h4>
+
+                        <div class="content">
+
+                            <h4 class="ui header">Parameters</h4>
+                            {% if query.params|length > 0 %}
+                                <table class="ui celled table">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Value</th>
+                                        <th>Type</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for name, param in query.params  %}
+                                        <tr>
+                                            <td>{{ name }}</td>
+                                            <td>{{ param.value }}</td>
+                                            <td>{{ param.type }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p class="none">None</p>
+                            {% endif %}
+
+                            <h4 class="ui header">Result</h4>
+                            {% if query.results|length > 0 %}
+                                <table class="ui celled table">
+                                    <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        {% for key in query.results.0|keys %}
+                                            <th>{{ key }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for key, row in query.results %}
+                                        <tr>
+                                            <td>{{ key + 1 }}</td>
+                                            {% for value in row %}
+                                                <td>{{ value }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p class="none">None</p>
+                            {% endif %}
+
+                            <h4 class="ui header">Info</h4>
+                            <ul class="ui list">
+                                <li><b>Execution time: </b> {{ query.info.execTime }}ms</li>
+                                <li><b>Timestamp: </b> {{ query.info.timestamp }}</li>
+                            </ul>
+
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if query.message == "" %}
+                        NULL
+                    {% else %}
+                        {{ query.message }}
+                    {% endif %}
+                </td>
+                <td>{{ query.code }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+
+
+    </table>
+</nav>
+<!-- !Query sidebar -->
+
+<!-- Runtime sidebar -->
+<nav class="ui right vertical very wide sidebar monitor-sub-sidebar runtime-sidebar">
+    <h1 class="header"><i class="fas fa-chart-area"></i> Runtime</h1>
+
+    <div class="container">
+        <ul class="ui list">
+            <li><b>System calls:</b> {{ execTime.stime }}ms</li>
+            <li><b>Computation:</b> {{ execTime.utime }}ms</li>
+        </ul>
+    </div>
+</nav>
+<!-- !Runtime sidebar -->
+
+<!-- Client sidebar -->
+<nav class="ui right vertical very wide sidebar monitor-sub-sidebar client-sidebar">
+    <h1 class="header"><i class="fas fa-laptop"></i> Client</h1>
+
+    <div class="container">
+        <ul class="ui list">
+            <li><b>IP:</b> {{ client.ip }}</li>
+            <li><b>OS:</b> {{ client.os }}</li>
+            <li><b>Browser:</b> {{ client.browser }}</li>
+            <li><b>Device:</b> {{ client.device }}</li>
+        </ul>
+    </div>
+</nav>
+<!-- !Client sidebar -->
+
+<a href="#" class="monitor-menu-trigger">
+    <i class="fas fa-chart-area"></i> Monitor
+</a>
+
+<script src="{{ __scripts__ }}vendor/jquery.min.js"></script>
+<script src="{{ __scripts__ }}vendor/semantic.min.js"></script>
+<script src="{{ __scripts__ }}vendor/highlight.pack.js"></script>
+<script src="{{ __scripts__ }}common/monitor.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+<script language='javascript'>
+    $(document).ready(function(){
+        $('.ui.accordion').accordion();
+        $('.monitor-tabs .item').tab();
+    });
+</script>
